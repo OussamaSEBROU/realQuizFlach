@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #10b981; /* Emerald Green */
+  --color-primary-dark: #059669;
+  --color-accent: #3b82f6; /* Blue for lines/accents */
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply transition-colors duration-500 bg-white text-black dark:bg-black dark:text-white;
+  }
+}
+
+@layer utilities {
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  /* Shining Effect */
+  .shining-border {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shining-border::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      rgba(59, 130, 246, 0.2),
+      transparent
+    );
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+  }
+
+  @keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+  }
+
+  /* 3D Floating */
+  .floating-3d {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+    50% { transform: translateY(-15px) rotateX(4deg) rotateY(2deg); }
+  }
+
+  /* 3D Card Shadow */
+  .shadow-3d {
+    box-shadow: 
+      0 1px 1px rgba(59, 130, 246, 0.1),
+      0 2px 2px rgba(59, 130, 246, 0.1),
+      0 4px 4px rgba(59, 130, 246, 0.1),
+      0 8px 8px rgba(59, 130, 246, 0.1),
+      0 16px 16px rgba(59, 130, 246, 0.1);
+  }
+
+  .shadow-3d-dark {
+    box-shadow: 
+      0 1px 1px rgba(0, 0, 0, 0.5),
+      0 2px 2px rgba(0, 0, 0, 0.5),
+      0 4px 4px rgba(0, 0, 0, 0.5),
+      0 8px 8px rgba(0, 0, 0, 0.5),
+      0 16px 16px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Glassmorphism */
+.glass {
+  @apply bg-white/10 backdrop-blur-md border border-accent/20;
+}
+
+.glass-dark {
+  @apply bg-black/40 backdrop-blur-md border border-accent/10;
+}
