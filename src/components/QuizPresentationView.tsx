@@ -490,7 +490,16 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={async () => {
-              if (!isAdmin) {
+              if (!isCreator) {
+                // If it's already a shared quiz, just copy the current URL
+                navigator.clipboard.writeText(window.location.href);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+                return;
+              }
+
+              const currentUser = auth.currentUser;
+              if (!currentUser) {
                 if (onGoToDashboard) {
                   onGoToDashboard();
                 } else {
