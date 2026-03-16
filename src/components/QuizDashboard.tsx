@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, Users, Target, Award, ChevronDown, ChevronUp, LogIn, LogOut, ShieldCheck } from 'lucide-react';
+import { Upload, Users, Target, Award, ChevronDown, ChevronUp, LogIn, LogOut, ShieldCheck, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { Language } from '../types';
 import { translations } from '../translations';
@@ -45,10 +45,11 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
+  const fetchResults = async () => {
     if (isAdmin && user) {
-      const q = query(collection(db, 'quiz_results'), orderBy('date', 'desc'));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      try {
+        const q = query(collection(db, 'quiz_results'), orderBy('date', 'desc'));
+        const snapshot = await getDocs(q);
         const firestoreResults = snapshot.docs
           .map(doc => ({
             id: doc.id,
@@ -59,15 +60,18 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
         const filteredResults = firestoreResults.filter(r => r.teacherId === user.uid);
         
         setResults(filteredResults);
-      }, (error) => {
+      } catch (error) {
         handleFirestoreError(error, OperationType.LIST, 'quiz_results');
-      });
-      return () => unsubscribe();
+      }
     } else {
       // Fallback to local storage if not admin or not logged in
       const saved = localStorage.getItem('quiz_results');
       if (saved) setResults(JSON.parse(saved));
     }
+  };
+
+  useEffect(() => {
+    fetchResults();
   }, [isAdmin, user]);
 
   const handleLogin = async () => {
@@ -221,6 +225,15 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
         </div>
         
         <div className="flex items-center gap-3">
+          {isAdmin && (
+            <button 
+              onClick={fetchResults}
+              className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-2xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
+              title="Refresh"
+            >
+              <RefreshCw size={20} />
+            </button>
+          )}
           {!user ? (
             <button 
               onClick={handleLogin}
