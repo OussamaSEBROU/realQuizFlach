@@ -71,8 +71,15 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.warn('The login window was closed before completing the login.');
+      } else if (error.code === 'auth/popup-blocked') {
+        console.error('The login window was blocked by your browser. Please allow popups for this site.');
+      } else {
+        console.error('Authentication error:', error.message);
+      }
     }
   };
 
