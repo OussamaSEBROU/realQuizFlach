@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import LZString from 'lz-string';
+import { collection, addDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Maximize2, Minimize2, Timer, Share2, Check, X, RotateCcw, Trophy, ChevronRight, Music, CheckCircle2, Download, Play } from 'lucide-react';
 import { QuizQuestion, Language } from '../types';
 import { useSound } from '../hooks/useSound';
@@ -183,6 +185,24 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
       
       const existingResults = JSON.parse(localStorage.getItem('quiz_results') || '[]');
       localStorage.setItem('quiz_results', JSON.stringify([...existingResults, newResult]));
+
+      // Save to Firestore
+      const saveToFirestore = async () => {
+        try {
+          await addDoc(collection(db, 'quiz_results'), {
+            quizTitle: newResult.quizTitle,
+            studentName: newResult.studentName,
+            score: newResult.score,
+            totalQuestions: newResult.totalQuestions,
+            date: newResult.date,
+            details: newResult.details
+          });
+          console.log('Result saved to Firestore');
+        } catch (error) {
+          handleFirestoreError(error, OperationType.CREATE, 'quiz_results');
+        }
+      };
+      saveToFirestore();
     }
   }, [isFinished, userAnswers, questions.length, quizTitle, userName, score]);
 
