@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import LZString from 'lz-string';
-import { collection, addDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Maximize2, Minimize2, Timer, Share2, Check, X, RotateCcw, Trophy, ChevronRight, Music, CheckCircle2, Download, Play } from 'lucide-react';
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
+import { Maximize2, Minimize2, Timer, Share2, Check, X, RotateCcw, Trophy, ChevronRight, Music, CheckCircle2, Download, Play, AlertCircle } from 'lucide-react';
 import { QuizQuestion, Language } from '../types';
 import { useSound } from '../hooks/useSound';
 import { translations } from '../translations';
@@ -34,6 +34,20 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
   const [userAnswers, setUserAnswers] = useState<{question: string, selected: string[], correct: string[], isCorrect: boolean}[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [maxRetriesReached, setMaxRetriesReached] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [timeSpent, setTimeSpent] = useState<number>(0);
+
+  useEffect(() => {
+    if (hasStarted && !startTime) {
+      setStartTime(Date.now());
+    }
+  }, [hasStarted, startTime]);
+
+  useEffect(() => {
+    if (isFinished && startTime) {
+      setTimeSpent(Math.round((Date.now() - startTime) / 1000));
+    }
+  }, [isFinished, startTime]);
 
   const quizHash = useMemo(() => {
     return btoa(encodeURIComponent(quizTitle + questions.length + (questions[0]?.question || '')));
@@ -176,6 +190,7 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
         score,
         totalQuestions: questions.length,
         date: dateStr,
+        timeSpent,
         details: userAnswers.map(ans => ({
           question: ans.question,
           selected: ans.selected.join(' | '),
@@ -436,16 +451,29 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
           <motion.button 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => {
-              const minimalString = questions.map(q => {
-                const correctIndices = q.correctOptionIndices ? q.correctOptionIndices.join(',') : q.correctOptionIndex;
-                return `${q.question}\x1F${q.options.join('\x1F')}\x1F${correctIndices}`;
-              }).join('\x1E');
-              const shareableData = LZString.compressToEncodedURIComponent(minimalString);
-              const url = `${window.location.origin}${window.location.pathname}?quiz=${shareableData}&time=${timeLimit}&retries=${allowedRetries}&title=${encodeURIComponent(quizTitle)}`;
-              navigator.clipboard.writeText(url);
-              setIsCopied(true);
-              setTimeout(() => setIsCopied(false), 2000);
+            onClick={async () => {
+              if (!auth.currentUser || auth.currentUser.email !== 'oussamsabrou031@gmail.com') {
+                alert(lang === 'ar' ? 'يرجى تسجيل الدخول كأدمن لمشاركة الكويز' : 'Please log in as admin to share the quiz');
+                return;
+              }
+              
+              try {
+                const quizData = {
+                  title: quizTitle,
+                  questions,
+                  timeLimit,
+                  allowedRetries,
+                  createdAt: Date.now(),
+                };
+                const docRef = await addDoc(collection(db, 'shared_quizzes'), quizData);
+                const url = `${window.location.origin}${window.location.pathname}?quizId=${docRef.id}`;
+                navigator.clipboard.writeText(url);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+              } catch (error) {
+                console.error('Error sharing quiz:', error);
+                handleFirestoreError(error, OperationType.CREATE, 'shared_quizzes');
+              }
             }}
             className={`p-2 rounded-full transition-all ${isCopied ? 'bg-emerald-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
             title="Share Quiz"
