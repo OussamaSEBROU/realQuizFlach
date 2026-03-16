@@ -69,7 +69,7 @@ export default function App() {
   const [appMode, setAppMode] = useState<AppMode>(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('cards')) return 'flashcards';
-    if (params.get('quiz')) return 'quizzes';
+    if (params.get('quiz') || params.get('quizId')) return 'quizzes';
     return 'home';
   });
   
