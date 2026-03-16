@@ -42,9 +42,17 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
   const [maxRetriesReached, setMaxRetriesReached] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeSpent, setTimeSpent] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return auth.currentUser?.email === 'oussamsabrou031@gmail.com';
+  });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && user.email === 'oussamsabrou031@gmail.com') {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
       if (user && (user.email === 'oussamsabrou031@gmail.com' || user.uid === teacherId)) {
         setHasStarted(true);
       }
@@ -482,7 +490,7 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={async () => {
-              if (!auth.currentUser || auth.currentUser.email !== 'oussamsabrou031@gmail.com') {
+              if (!isAdmin) {
                 if (onGoToDashboard) {
                   onGoToDashboard();
                 } else {
