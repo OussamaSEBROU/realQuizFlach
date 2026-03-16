@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, Users, Target, Award, ChevronDown, ChevronUp } from 'lucide-react';
+import { Upload, Users, Target, Award, ChevronDown, ChevronUp, LogIn, LogOut, ShieldCheck } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { Language } from '../types';
 import { translations } from '../translations';
 
@@ -25,18 +28,55 @@ interface ParsedResult {
 }
 
 export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
-  const [results, setResults] = useState<ParsedResult[]>(() => {
-    const saved = localStorage.getItem('quiz_results');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [results, setResults] = useState<ParsedResult[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = translations[lang];
 
-  // Save results to localStorage whenever they change
+  const ADMIN_EMAIL = "oussamsabrou031@gmail.com";
+
   useEffect(() => {
-    localStorage.setItem('quiz_results', JSON.stringify(results));
-  }, [results]);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAdmin(currentUser?.email === ADMIN_EMAIL);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      const q = query(collection(db, 'quiz_results'), orderBy('date', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const firestoreResults = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as ParsedResult[];
+        
+        // Merge with local results if any (optional, but prompt says "without csv")
+        setResults(firestoreResults);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'quiz_results');
+      });
+      return () => unsubscribe();
+    } else {
+      // Fallback to local storage if not admin or not logged in
+      const saved = localStorage.getItem('quiz_results');
+      if (saved) setResults(JSON.parse(saved));
+    }
+  }, [isAdmin]);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
+
+  const handleLogout = () => signOut(auth);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -159,28 +199,61 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-black text-black dark:text-white tracking-tighter">{t.dashboard}</h2>
+          <h2 className="text-3xl font-black text-black dark:text-white tracking-tighter flex items-center gap-3">
+            {t.dashboard}
+            {isAdmin && <ShieldCheck className="text-primary" size={24} />}
+          </h2>
           <p className="text-zinc-500 dark:text-zinc-400 font-medium mt-1">
-            {lang === 'ar' ? 'قم برفع ملفات نتائج الطلاب (CSV) لعرض الإحصائيات' : 'Upload student result files (CSV) to view statistics'}
+            {isAdmin 
+              ? (lang === 'ar' ? 'يتم عرض النتائج مباشرة من قاعدة البيانات' : 'Results are displayed live from the database')
+              : (lang === 'ar' ? 'قم بتسجيل الدخول كمسؤول لعرض النتائج السحابية' : 'Log in as admin to view cloud results')}
           </p>
         </div>
         
-        <div>
-          <input 
-            type="file" 
-            accept=".csv" 
-            multiple 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="px-6 py-3 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2"
-          >
-            <Upload size={20} />
-            <span>{t.importResults}</span>
-          </button>
+        <div className="flex items-center gap-3">
+          {!user ? (
+            <button 
+              onClick={handleLogin}
+              className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-black shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+            >
+              <LogIn size={20} />
+              <span>{lang === 'ar' ? 'دخول المسؤول' : 'Admin Login'}</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden md:block">
+                <p className="text-xs font-black text-accent uppercase tracking-widest">{user.displayName}</p>
+                <p className="text-[10px] text-zinc-500 truncate max-w-[150px]">{user.email}</p>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="p-3 bg-zinc-100 dark:bg-zinc-800 text-red-500 rounded-2xl hover:bg-red-50 transition-all"
+                title="Logout"
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
+          )}
+
+          {!isAdmin && (
+            <>
+              <input 
+                type="file" 
+                accept=".csv" 
+                multiple 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="px-6 py-3 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <Upload size={20} />
+                <span>{t.importResults}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
