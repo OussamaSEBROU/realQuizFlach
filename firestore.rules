@@ -37,7 +37,8 @@ service cloud.firestore {
              data.score is number && data.score >= 0 &&
              data.totalQuestions is number && data.totalQuestions > 0 &&
              data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$") &&
-             data.details is list && data.details.size() <= 100;
+             data.details is list && data.details.size() <= 100 &&
+             (!('teacherId' in data) || data.teacherId is string);
     }
 
     // ===============================================================
@@ -45,13 +46,14 @@ service cloud.firestore {
     // ===============================================================
 
     match /quiz_results/{resultId} {
-      // Anyone can submit a result (even unauthenticated users if they have the link)
-      // However, for better security, we could require auth, but the prompt implies "anyone with the link"
-      // Let's allow create for anyone but validate the data strictly.
+      // Anyone can submit a result
       allow create: if isValidResult(request.resource.data);
       
-      // Only admin can read/list/delete results
-      allow read, list, delete: if isAdmin();
+      // Only the teacher can read their own students' results
+      allow read, list: if isAuthenticated() && (isAdmin() || resource.data.teacherId == request.auth.uid);
+      
+      // Only admin can delete results
+      allow delete: if isAdmin();
       
       // Results should not be updated once submitted
       allow update: if false;
