@@ -28,6 +28,7 @@ export interface QuizSet {
   timeLimit: number; // in seconds
   allowedRetries?: number; // 0 means unlimited, >0 means specific number of retries
   createdAt: number;
+  teacherId?: string;
 }
 
 export type Theme = 'light' | 'dark';
