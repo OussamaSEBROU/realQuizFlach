@@ -57,9 +57,11 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
             ...doc.data()
           })) as (ParsedResult & { teacherId?: string })[];
         
+        console.log('All results from Firestore:', firestoreResults);
+        
         // Filter results by teacherId
         const filteredResults = firestoreResults.filter(r => r.teacherId === user.uid);
-        console.log('Fetched results:', filteredResults);
+        console.log('Filtered results:', filteredResults);
         
         setResults(filteredResults);
       } catch (error) {
@@ -471,3 +473,4 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
     </div>
   );
 };
+// Trigger rebuild
