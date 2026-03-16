@@ -19,6 +19,7 @@ interface ParsedResult {
   score: number;
   totalQuestions: number;
   date: string;
+  timeSpent?: number;
   details: {
     question: string;
     selected: string;
@@ -392,6 +393,7 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
                     <th className="p-6 text-xs font-black text-zinc-500 uppercase tracking-widest">Quiz</th>
                     <th className="p-6 text-xs font-black text-zinc-500 uppercase tracking-widest">{t.score}</th>
                     <th className="p-6 text-xs font-black text-zinc-500 uppercase tracking-widest">{t.date}</th>
+                    <th className="p-6 text-xs font-black text-zinc-500 uppercase tracking-widest">Time (s)</th>
                     <th className="p-6 text-xs font-black text-zinc-500 uppercase tracking-widest text-right">{t.details}</th>
                   </tr>
                 </thead>
@@ -407,11 +409,14 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
                               ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
                               : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                           }`}>
-                            {result.score} / {result.totalQuestions}
+                            {((result.score / result.totalQuestions) * 100).toFixed(0)}%
                           </span>
                         </td>
                         <td className="p-6 font-medium text-zinc-500 text-sm">
                           {new Date(result.date).toLocaleDateString()}
+                        </td>
+                        <td className="p-6 font-medium text-zinc-500 text-sm">
+                          {result.timeSpent || '-'}s
                         </td>
                         <td className="p-6 text-right">
                           <button 
@@ -425,7 +430,7 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
                       <AnimatePresence>
                         {expandedRow === result.id && (
                           <tr className="bg-zinc-50/50 dark:bg-zinc-900/50">
-                            <td colSpan={5} className="p-0">
+                            <td colSpan={6} className="p-0">
                               <motion.div 
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
