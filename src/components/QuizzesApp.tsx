@@ -19,6 +19,10 @@ interface QuizzesAppProps {
 export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) => {
   const [sets, setSets] = useState<QuizSet[]>(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('quiz') === 'dashboard') {
+      const saved = localStorage.getItem('quiz_sets');
+      return saved ? JSON.parse(saved) : [];
+    }
     if (params.get('quiz') || params.get('quizId')) return [];
     const saved = localStorage.getItem('quiz_sets');
     return saved ? JSON.parse(saved) : [];
@@ -26,6 +30,10 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
   
   const [activeSetId, setActiveSetId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('quiz') === 'dashboard') {
+      const saved = localStorage.getItem('active_quiz_set_id');
+      return saved || null;
+    }
     if (params.get('quiz') || params.get('quizId')) return 'shared-quiz';
     const saved = localStorage.getItem('active_quiz_set_id');
     return saved || null;
@@ -33,6 +41,7 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('quiz') === 'dashboard') return 'dashboard';
     if (params.get('quiz') || params.get('quizId')) return 'present';
     return 'manage';
   });
