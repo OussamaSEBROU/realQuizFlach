@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { Layout, BookOpen, Layers, Trash2, Play, Settings2, FolderPlus, Folder, ChevronRight, Plus, Edit3, X, AlertCircle } from 'lucide-react';
 import LZString from 'lz-string';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { QuizQuestion, QuizSet, ViewMode, Language } from '../types';
 import { QuizQuestionComponent } from './QuizQuestionComponent';
 import { QuizForm } from './QuizForm';
 import { QuizPresentationView } from './QuizPresentationView';
-import { QuizDashboard } from './QuizDashboard';
+import QuizDashboard from './QuizDashboard';
 import { translations } from '../translations';
 
 interface QuizzesAppProps {
@@ -69,46 +70,32 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const sharedQuiz = params.get('quiz');
-    const timeLimitParam = params.get('time');
-    const retriesParam = params.get('retries');
-    if (sharedQuiz) {
-      try {
-        const decompressed = LZString.decompressFromEncodedURIComponent(sharedQuiz);
-        const parsed = decompressed.split('\x1E').map(qStr => qStr.split('\x1F'));
-        
-        const questions: QuizQuestion[] = parsed.map((item: any) => {
-          const correctOptionString = item[item.length - 1];
-          const correctOptionIndices = correctOptionString.includes(',') 
-            ? correctOptionString.split(',').map((i: string) => parseInt(i, 10))
-            : [parseInt(correctOptionString, 10)];
-            
-          return {
-            id: crypto.randomUUID(),
-            question: item[0],
-            options: item.slice(1, item.length - 1),
-            correctOptionIndex: correctOptionIndices[0], // Legacy
-            correctOptionIndices,
-            createdAt: Date.now()
-          };
-        });
-        
-        const sharedSet: QuizSet = {
-          id: 'shared-quiz',
-          title: params.get('title') || t.sharedSet || 'Shared Quiz',
-          questions,
-          timeLimit: timeLimitParam ? parseInt(timeLimitParam, 10) : 0,
-          allowedRetries: retriesParam ? parseInt(retriesParam, 10) : 0,
-          createdAt: Date.now(),
-        };
-        
-        setSets(prev => [...prev.filter(s => s.id !== 'shared-quiz'), sharedSet]);
-        setActiveSetId('shared-quiz');
-        setViewMode('present');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        console.error('Failed to parse shared quiz', e);
-      }
+    const sharedQuizId = params.get('quizId');
+    if (sharedQuizId) {
+      const fetchSharedQuiz = async () => {
+        try {
+          const docRef = doc(db, 'shared_quizzes', sharedQuizId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const sharedSet: QuizSet = {
+              id: 'shared-quiz',
+              title: data.title || t.sharedSet || 'Shared Quiz',
+              questions: data.questions,
+              timeLimit: data.timeLimit || 0,
+              allowedRetries: data.allowedRetries || 0,
+              createdAt: data.createdAt || Date.now(),
+            };
+            setSets(prev => [...prev.filter(s => s.id !== 'shared-quiz'), sharedSet]);
+            setActiveSetId('shared-quiz');
+            setViewMode('present');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (e) {
+          console.error('Failed to fetch shared quiz', e);
+        }
+      };
+      fetchSharedQuiz();
     }
   }, [t.sharedSet]);
 
