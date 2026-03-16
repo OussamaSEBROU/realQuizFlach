@@ -16,9 +16,10 @@ interface QuizPresentationViewProps {
   onFinish?: () => void;
   isCreator?: boolean;
   quizTitle?: string;
+  teacherId?: string;
 }
 
-export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ questions, timeLimit, allowedRetries = 0, lang, onFinish, isCreator, quizTitle = 'Quiz' }) => {
+export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ questions, timeLimit, allowedRetries = 0, lang, onFinish, isCreator, quizTitle = 'Quiz', teacherId }) => {
   const [hasStarted, setHasStarted] = useState(isCreator);
   const [userName, setUserName] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -195,7 +196,8 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
             score: newResult.score,
             totalQuestions: newResult.totalQuestions,
             date: newResult.date,
-            details: newResult.details
+            details: newResult.details,
+            teacherId: teacherId || null
           });
           console.log('Result saved to Firestore');
         } catch (error) {
