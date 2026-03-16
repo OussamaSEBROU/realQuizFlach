@@ -619,3 +619,7 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
           {isFullscreen ? <Minimize2 size={20} md:size={24} /> : <Maximize2 size={20} md:size={24} />}
           <span className="tracking-widest text-sm md:text-base">{isFullscreen ? t.exitFullscreen : t.fullscreen}</span>
         </motion.button>
+      </div>
+    </div>
+  );
+};
