@@ -57,11 +57,9 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
             ...doc.data()
           })) as (ParsedResult & { teacherId?: string })[];
         
-        console.log('All results from Firestore:', firestoreResults);
-        
         // Filter results by teacherId
-        const filteredResults = firestoreResults.filter(r => r.teacherId === user.uid);
-        console.log('Filtered results:', filteredResults);
+        // If the user is admin, show all results for now, or ensure we match correctly
+        const filteredResults = firestoreResults.filter(r => !r.teacherId || r.teacherId === user.uid);
         
         setResults(filteredResults);
       } catch (error) {
