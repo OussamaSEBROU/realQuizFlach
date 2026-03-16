@@ -491,4 +491,4 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
     </div>
   );
 };
-// Trigger rebuild
+export default QuizDashboard;
