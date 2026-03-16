@@ -17,9 +17,10 @@ interface QuizPresentationViewProps {
   isCreator?: boolean;
   quizTitle?: string;
   teacherId?: string;
+  onGoToDashboard?: () => void;
 }
 
-export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ questions, timeLimit, allowedRetries = 0, lang, onFinish, isCreator, quizTitle = 'Quiz', teacherId }) => {
+export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ questions, timeLimit, allowedRetries = 0, lang, onFinish, isCreator, quizTitle = 'Quiz', teacherId, onGoToDashboard }) => {
   const [hasStarted, setHasStarted] = useState(isCreator);
   const [userName, setUserName] = useState(() => {
     if (auth.currentUser) {
@@ -41,6 +42,15 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
   const [maxRetriesReached, setMaxRetriesReached] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeSpent, setTimeSpent] = useState<number>(0);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && (user.email === 'oussamsabrou031@gmail.com' || user.uid === teacherId)) {
+        setHasStarted(true);
+      }
+    });
+    return () => unsubscribe();
+  }, [teacherId]);
 
   useEffect(() => {
     if (hasStarted && !startTime) {
@@ -473,7 +483,11 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
             whileTap={{ scale: 0.9 }}
             onClick={async () => {
               if (!auth.currentUser || auth.currentUser.email !== 'oussamsabrou031@gmail.com') {
-                alert(lang === 'ar' ? 'يرجى تسجيل الدخول كأدمن لمشاركة الكويز' : 'Please log in as admin to share the quiz');
+                if (onGoToDashboard) {
+                  onGoToDashboard();
+                } else {
+                  window.location.href = '?quiz=dashboard';
+                }
                 return;
               }
               
