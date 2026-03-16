@@ -101,7 +101,14 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
             };
             setSets(prev => [...prev.filter(s => s.id !== 'shared-quiz'), sharedSet]);
             setActiveSetId('shared-quiz');
-            setViewMode('present');
+            
+            const isAdmin = auth.currentUser && auth.currentUser.email === 'oussamsabrou031@gmail.com';
+            if (isAdmin) {
+              setViewMode('dashboard');
+            } else {
+              setViewMode('present');
+            }
+            
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (e) {
