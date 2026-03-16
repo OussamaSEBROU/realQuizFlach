@@ -21,7 +21,12 @@ interface QuizPresentationViewProps {
 
 export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ questions, timeLimit, allowedRetries = 0, lang, onFinish, isCreator, quizTitle = 'Quiz', teacherId }) => {
   const [hasStarted, setHasStarted] = useState(isCreator);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(() => {
+    if (auth.currentUser) {
+      return auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || '';
+    }
+    return '';
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -317,11 +322,22 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
               }
             }}
             disabled={!userName.trim()}
-            className="w-full py-4 rounded-2xl bg-primary text-white font-black text-lg hover:bg-primary-dark transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 rounded-2xl bg-primary text-white font-black text-lg hover:bg-primary-dark transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
           >
             <Play size={20} className={lang === 'ar' ? 'rotate-180' : ''} />
             <span>{lang === 'ar' ? 'انطلاق' : 'Start'}</span>
           </button>
+
+          {auth.currentUser && (teacherId === auth.currentUser.uid || auth.currentUser.email === 'oussamsabrou031@gmail.com') && (
+            <button
+              onClick={() => {
+                window.location.href = '?quiz=dashboard';
+              }}
+              className="w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-black text-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
+            >
+              <span>{lang === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard'}</span>
+            </button>
+          )}
         </motion.div>
       </div>
     );
