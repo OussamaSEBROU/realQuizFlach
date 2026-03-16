@@ -19,21 +19,21 @@ interface QuizzesAppProps {
 export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) => {
   const [sets, setSets] = useState<QuizSet[]>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('quiz')) return [];
+    if (params.get('quiz') || params.get('quizId')) return [];
     const saved = localStorage.getItem('quiz_sets');
     return saved ? JSON.parse(saved) : [];
   });
   
   const [activeSetId, setActiveSetId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('quiz')) return 'shared-quiz';
+    if (params.get('quiz') || params.get('quizId')) return 'shared-quiz';
     const saved = localStorage.getItem('active_quiz_set_id');
     return saved || null;
   });
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('quiz')) return 'present';
+    if (params.get('quiz') || params.get('quizId')) return 'present';
     return 'manage';
   });
   
@@ -55,6 +55,10 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
   const [setToDeleteId, setSetToDeleteId] = useState<string | null>(null);
   const [questionToEdit, setQuestionToEdit] = useState<QuizQuestion | null>(null);
   const [questionToDeleteId, setQuestionToDeleteId] = useState<string | null>(null);
+  const [isLoadingSharedQuiz, setIsLoadingSharedQuiz] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return !!params.get('quizId');
+  });
 
   useEffect(() => {
     localStorage.setItem('quiz_sets', JSON.stringify(sets.filter(s => s.id !== 'shared-quiz')));
@@ -93,6 +97,8 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
           }
         } catch (e) {
           console.error('Failed to fetch shared quiz', e);
+        } finally {
+          setIsLoadingSharedQuiz(false);
         }
       };
       fetchSharedQuiz();
@@ -211,6 +217,15 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
   };
 
   const activeSet = sets.find(s => s.id === activeSetId);
+
+  if (isLoadingSharedQuiz) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-zinc-500 font-medium">{t.loading || 'Loading...'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
