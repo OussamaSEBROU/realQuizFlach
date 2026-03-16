@@ -46,16 +46,19 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && user) {
       const q = query(collection(db, 'quiz_results'), orderBy('date', 'desc'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const firestoreResults = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as ParsedResult[];
+        const firestoreResults = snapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as (ParsedResult & { teacherId?: string })[];
         
-        // Merge with local results if any (optional, but prompt says "without csv")
-        setResults(firestoreResults);
+        // Filter results by teacherId
+        const filteredResults = firestoreResults.filter(r => r.teacherId === user.uid);
+        
+        setResults(filteredResults);
       }, (error) => {
         handleFirestoreError(error, OperationType.LIST, 'quiz_results');
       });
@@ -65,7 +68,7 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
       const saved = localStorage.getItem('quiz_results');
       if (saved) setResults(JSON.parse(saved));
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const handleLogin = async () => {
     try {
