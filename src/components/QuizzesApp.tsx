@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { Layout, BookOpen, Layers, Trash2, Play, Settings2, FolderPlus, Folder, ChevronRight, Plus, Edit3, X, AlertCircle } from 'lucide-react';
 import LZString from 'lz-string';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { QuizQuestion, QuizSet, ViewMode, Language } from '../types';
 import { QuizQuestionComponent } from './QuizQuestionComponent';
 import { QuizForm } from './QuizForm';
@@ -121,6 +122,7 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
       timeLimit: newSetTimeLimit,
       allowedRetries: newSetAllowedRetries,
       createdAt: Date.now(),
+      teacherId: auth.currentUser?.uid,
     };
     setSets([newSet, ...sets]);
     setActiveSetId(newSet.id);
@@ -778,6 +780,7 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
                   onFinish={() => setActiveSetId(null)}
                   isCreator={activeSet.id !== 'shared-quiz'}
                   quizTitle={activeSet.title}
+                  teacherId={activeSet.teacherId}
                 />
               </>
             ) : (
