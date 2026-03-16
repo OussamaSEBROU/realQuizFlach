@@ -190,17 +190,21 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
       // Save to Firestore
       const saveToFirestore = async () => {
         try {
-          await addDoc(collection(db, 'quiz_results'), {
+          const dataToSave: any = {
             quizTitle: newResult.quizTitle,
             studentName: newResult.studentName,
             score: newResult.score,
             totalQuestions: newResult.totalQuestions,
             date: newResult.date,
-            details: newResult.details,
-            teacherId: teacherId || null
-          });
-          console.log('Result saved to Firestore');
+            details: newResult.details
+          };
+          if (teacherId) {
+            dataToSave.teacherId = teacherId;
+          }
+          await addDoc(collection(db, 'quiz_results'), dataToSave);
+          console.log('Result saved to Firestore', dataToSave);
         } catch (error) {
+          console.error('Error saving to Firestore:', error);
           handleFirestoreError(error, OperationType.CREATE, 'quiz_results');
         }
       };
@@ -583,7 +587,3 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
           {isFullscreen ? <Minimize2 size={20} md:size={24} /> : <Maximize2 size={20} md:size={24} />}
           <span className="tracking-widest text-sm md:text-base">{isFullscreen ? t.exitFullscreen : t.fullscreen}</span>
         </motion.button>
-      </div>
-    </div>
-  );
-};
