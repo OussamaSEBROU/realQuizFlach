@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: quiz_results
+    // Document ID: auto-generated
+    // Fields:
+    //   - quizTitle: string (required)
+    //   - studentName: string (required, 1-100 chars)
+    //   - score: number (required, >= 0)
+    //   - totalQuestions: number (required, > 0)
+    //   - date: string (required, ISO 8601 format)
+    //   - details: list (required, max 100 items)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "oussamsabrou031@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidResult(data) {
+      return data.keys().hasAll(['quizTitle', 'studentName', 'score', 'totalQuestions', 'date', 'details']) &&
+             data.quizTitle is string && data.quizTitle.size() > 0 && data.quizTitle.size() < 200 &&
+             data.studentName is string && data.studentName.size() > 0 && data.studentName.size() < 100 &&
+             data.score is number && data.score >= 0 &&
+             data.totalQuestions is number && data.totalQuestions > 0 &&
+             data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$") &&
+             data.details is list && data.details.size() <= 100;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /quiz_results/{resultId} {
+      // Anyone can submit a result (even unauthenticated users if they have the link)
+      // However, for better security, we could require auth, but the prompt implies "anyone with the link"
+      // Let's allow create for anyone but validate the data strictly.
+      allow create: if isValidResult(request.resource.data);
+      
+      // Only admin can read/list/delete results
+      allow read, list, delete: if isAdmin();
+      
+      // Results should not be updated once submitted
+      allow update: if false;
+    }
+  }
+}

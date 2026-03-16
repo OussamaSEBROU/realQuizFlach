@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "QuizResult": {
+      "title": "Quiz Result",
+      "description": "A result of a quiz taken by a student",
+      "type": "object",
+      "properties": {
+        "quizTitle": { "type": "string" },
+        "studentName": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "selected": { "type": "string" },
+              "correct": { "type": "string" },
+              "isCorrect": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "required": ["quizTitle", "studentName", "score", "totalQuestions", "date", "details"]
+    }
+  },
+  "firestore": {
+    "/quiz_results/{resultId}": {
+      "schema": "QuizResult",
+      "description": "Collection of quiz results"
+    }
+  }
+}
