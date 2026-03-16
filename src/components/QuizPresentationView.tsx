@@ -211,6 +211,10 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
             score: newResult.score,
             totalQuestions: newResult.totalQuestions,
             date: newResult.date,
+            timeSpent: newResult.timeSpent,
+            startTime: startTime,
+            endTime: startTime ? startTime + (newResult.timeSpent * 1000) : Date.now(),
+            attempts: attempts,
             details: newResult.details
           };
           if (teacherId) {
@@ -615,7 +619,3 @@ export const QuizPresentationView: React.FC<QuizPresentationViewProps> = ({ ques
           {isFullscreen ? <Minimize2 size={20} md:size={24} /> : <Maximize2 size={20} md:size={24} />}
           <span className="tracking-widest text-sm md:text-base">{isFullscreen ? t.exitFullscreen : t.fullscreen}</span>
         </motion.button>
-      </div>
-    </div>
-  );
-};
