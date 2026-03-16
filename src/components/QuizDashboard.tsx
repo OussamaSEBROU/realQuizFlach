@@ -244,13 +244,18 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
             </button>
           )}
           {!user ? (
-            <button 
-              onClick={handleLogin}
-              className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-black shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <LogIn size={20} />
-              <span>{lang === 'ar' ? 'دخول المسؤول' : 'Admin Login'}</span>
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <button 
+                onClick={handleLogin}
+                className="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-black shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <LogIn size={20} />
+                <span>{lang === 'ar' ? 'دخول المسؤول' : 'Admin Login'}</span>
+              </button>
+              <p className="text-xs text-zinc-500 font-medium">
+                {lang === 'ar' ? 'إذا كنت المسؤول، يرجى تسجيل الدخول' : 'If you are an admin, please log in'}
+              </p>
+            </div>
           ) : (
             <div className="flex items-center gap-4">
               <div className="text-right hidden md:block">
