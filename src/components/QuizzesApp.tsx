@@ -98,6 +98,7 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
               timeLimit: data.timeLimit || 0,
               allowedRetries: data.allowedRetries || 0,
               createdAt: data.createdAt || Date.now(),
+              teacherId: data.teacherId,
             };
             setSets(prev => [...prev.filter(s => s.id !== 'shared-quiz'), sharedSet]);
             setActiveSetId('shared-quiz');
@@ -791,7 +792,7 @@ export const QuizzesApp: React.FC<QuizzesAppProps> = ({ lang, onBackToHome }) =>
                   onFinish={() => setActiveSetId(null)}
                   isCreator={activeSet.id !== 'shared-quiz'}
                   quizTitle={activeSet.title}
-                  teacherId={activeSet.teacherId}
+                  teacherId={activeSet.id === 'shared-quiz' ? auth.currentUser?.uid : activeSet.teacherId}
                   onGoToDashboard={() => setViewMode('dashboard')}
                 />
               </>
