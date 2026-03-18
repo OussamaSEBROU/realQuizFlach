@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Upload, Users, Target, Award, ChevronDown, ChevronUp, LogIn, LogOut, ShieldCheck, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
-import { collection, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { Language } from '../types';
 import { translations } from '../translations';
@@ -44,16 +44,18 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setIsAdmin(currentUser?.email === ADMIN_EMAIL);
+      setIsAdmin(currentUser?.email === ADMIN_EMAIL && currentUser?.emailVerified === true);
     });
     return () => unsubscribe();
   }, []);
 
   const fetchResults = async () => {
-    console.log('fetchResults called, isAdmin:', isAdmin, 'user:', user);
-    if (isAdmin && user) {
+    console.log('fetchResults called, user:', user);
+    if (user) {
       try {
-        const q = query(collection(db, 'quiz_results'), orderBy('date', 'desc'));
+        // Always filter by teacherId to ensure each teacher only sees their own students' results
+        const q = query(collection(db, 'quiz_results'), where('teacherId', '==', user.uid), orderBy('date', 'desc'));
+        
         const snapshot = await getDocs(q);
         const firestoreResults = snapshot.docs
           .map(doc => ({
@@ -61,17 +63,13 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
             ...doc.data()
           })) as (ParsedResult & { teacherId?: string })[];
         
-        // Filter results by teacherId
-        // If the user is admin, show all results for now, or ensure we match correctly
-        const filteredResults = firestoreResults.filter(r => !r.teacherId || r.teacherId === user.uid);
-        
-        setResults(filteredResults);
+        setResults(firestoreResults);
       } catch (error) {
         console.error('Error fetching results:', error);
         handleFirestoreError(error, OperationType.LIST, 'quiz_results');
       }
     } else {
-      // Fallback to local storage if not admin or not logged in
+      // Fallback to local storage if not logged in
       const saved = localStorage.getItem('quiz_results');
       if (saved) setResults(JSON.parse(saved));
       console.log('Loaded from local storage:', saved);
