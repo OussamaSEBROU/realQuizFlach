@@ -57,12 +57,14 @@ export const QuizDashboard: React.FC<QuizDashboardProps> = ({ lang }) => {
         const q = query(collection(db, 'quiz_results'), where('teacherId', '==', user.uid), orderBy('date', 'desc'));
         
         const snapshot = await getDocs(q);
+        console.log('Snapshot size:', snapshot.size);
         const firestoreResults = snapshot.docs
           .map(doc => ({
             id: doc.id,
             ...doc.data()
           })) as (ParsedResult & { teacherId?: string })[];
         
+        console.log('Fetched results:', firestoreResults);
         setResults(firestoreResults);
       } catch (error) {
         console.error('Error fetching results:', error);
