@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { Layout, BookOpen, Layers, Trash2, Play, Settings2, FolderPlus, Folder, ChevronRight, Plus, Edit3, X, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'motion/react';
+import { Layout, BookOpen, Layers, Trash2, Play, Settings2, FolderPlus, Folder, ChevronRight, Plus, Edit3, X, AlertCircle, GripVertical } from 'lucide-react';
 import LZString from 'lz-string';
 import { Flashcard, FlashcardSet, ViewMode, Language, AppMode } from '../types';
 import { FlashcardComponent } from './Flashcard';
@@ -555,26 +555,34 @@ export const FlashcardsApp: React.FC<FlashcardsAppProps> = ({ lang, onBackToHome
                       onReorder={handleReorderCards}
                       className="flex flex-col gap-4 md:gap-8"
                     >
-                      <AnimatePresence mode="popLayout">
-                        {activeSet.cards.map((card, index) => (
-                          <Reorder.Item
-                            key={card.id}
-                            value={card}
-                            className="relative floating-3d cursor-grab active:cursor-grabbing"
-                          >
-                            <div className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} z-20 bg-black/10 dark:bg-white/10 text-black dark:text-white w-8 h-8 rounded-full flex items-center justify-center font-black`}>
-                              {index + 1}
-                            </div>
-                            <FlashcardComponent 
-                              card={card} 
-                              onDelete={confirmDeleteCard} 
-                              onEdit={(c) => { setCardToEdit(c); setIsEditCardModalOpen(true); }} 
-                              lang={lang}
-                              readonly={activeSet.id === 'shared-set'}
-                            />
-                          </Reorder.Item>
-                        ))}
-                      </AnimatePresence>
+                      <div className="flex flex-col gap-4 md:gap-8">
+                        {activeSet.cards.map((card, index) => {
+                          const dragControls = useDragControls();
+                          return (
+                            <Reorder.Item
+                              key={card.id}
+                              value={card}
+                              dragListener={false}
+                              dragControls={dragControls}
+                              className="relative cursor-grab active:cursor-grabbing"
+                            >
+                              <div 
+                                onPointerDown={(e) => dragControls.start(e)}
+                                className={`absolute bottom-4 ${lang === 'ar' ? 'right-4' : 'left-4'} z-20 bg-black/10 dark:bg-white/10 text-black dark:text-white w-10 h-10 rounded-full flex items-center justify-center font-black cursor-grab active:cursor-grabbing`}
+                              >
+                                <GripVertical size={20} />
+                              </div>
+                              <FlashcardComponent 
+                                card={card} 
+                                onDelete={confirmDeleteCard} 
+                                onEdit={(c) => { setCardToEdit(c); setIsEditCardModalOpen(true); }} 
+                                lang={lang}
+                                readonly={activeSet.id === 'shared-set'}
+                              />
+                            </Reorder.Item>
+                          );
+                        })}
+                      </div>
                     </Reorder.Group>
 
                     {activeSet.cards.length === 0 && (
